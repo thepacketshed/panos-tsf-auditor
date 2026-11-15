@@ -1,0 +1,6 @@
+{
+  "name": "PAN-OS TSF Auditor & NIST 800-53 / Zero Trust Compliance Analyzer",
+  "description": "Upload Palo Alto Networks firewall and Panorama Technical Support Files (TSF) to parse merged configurations, audit against NIST 800-53 controls and Zero Trust Architecture standards, detect unused objects, verify device hardening, check PAN-OS security advisories and Reddit/community known issues, and generate a 3-page executive compliance report.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

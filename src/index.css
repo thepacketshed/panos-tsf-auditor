@@ -1,0 +1,84 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  
+  code, pre, kbd, samp {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Print Styles for Exactly 3-Page Executive & Technical Report */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm 12mm 14mm;
+  }
+
+  body {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    font-size: 9.5pt !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .report-page-1,
+  .report-page-2,
+  .report-page-3 {
+    display: block !important;
+    min-height: 260mm;
+    max-height: 275mm;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .report-page-1 {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .report-page-2 {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .report-page-3 {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  /* Force light theme colors on print */
+  .print-surface {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  .print-surface-muted {
+    background-color: #f8fafc !important;
+    color: #334155 !important;
+    border-color: #e2e8f0 !important;
+  }
+}
+
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}
+
