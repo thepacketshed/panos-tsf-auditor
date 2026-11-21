@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileArchive, ShieldAlert, Cpu, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Disclaimer } from './Disclaimer';
 
 interface FileUploadZoneProps {
   onFileSelect: (file: File) => void;
@@ -48,6 +49,8 @@ export const FileUploadZone: React.FC<FileUploadZoneProps> = ({
           Upload a firewall or Panorama Tech Support File (TSF). The analyzer automatically extracts the merged managed configuration, validates compliance against NIST 800-53 controls, audits Zero Trust architecture, identifies unused objects for hygiene cleanup, and checks against latest PAN-OS CVE advisories and Reddit community bug trackers.
         </p>
       </div>
+
+      <Disclaimer variant="banner" className="mb-4" />
 
       {/* Upload Box */}
       <div
