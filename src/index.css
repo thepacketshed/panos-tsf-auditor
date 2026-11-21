@@ -62,6 +62,33 @@
     break-after: auto !important;
   }
 
+  /* Print-only title page and closing page around the 3-page report */
+  .report-cover,
+  .report-closing {
+    height: 268mm;
+    box-sizing: border-box;
+    overflow: hidden;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  .report-cover > div,
+  .report-closing > div {
+    height: 100%;
+  }
+
+  .report-cover {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .report-closing {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
   /* Force light theme colors on print */
   .print-surface {
     background-color: #ffffff !important;
