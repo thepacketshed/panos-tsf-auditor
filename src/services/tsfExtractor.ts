@@ -1,6 +1,6 @@
 import { ungzip } from 'pako';
 import JSZip from 'jszip';
-import { PanOsConfig, SecurityRule, AddressObject, AddressGroupObject, ServiceObject, DecryptionRule, DeviceHardeningSettings } from '../types/panos';
+import { PanOsConfig, SecurityRule, AddressObject, AddressGroupObject, ServiceObject, DecryptionRule, DeviceHardeningSettings, ObjectLocation, ManagementDetection } from '../types/panos';
 
 /**
  * Reads a POSIX TAR archive from a Uint8Array.
@@ -164,6 +164,95 @@ function getMemberValues(parentElement: Element | null, tag = 'member'): string[
 }
 
 /**
+ * Walks up the XML tree to find where a rule/object is defined:
+ * shared, a Panorama device-group, a firewall vsys, or the local config,
+ * plus which rulebase (local, pre or post) a rule sits in.
+ */
+function locateNode(node: Element): ObjectLocation & { rulebase?: 'local' | 'pre' | 'post' } {
+  let rulebase: 'local' | 'pre' | 'post' | undefined;
+  let el: Element | null = node.parentElement;
+  while (el) {
+    const tag = el.tagName;
+    if (tag === 'pre-rulebase') rulebase = 'pre';
+    else if (tag === 'post-rulebase') rulebase = 'post';
+    else if (tag === 'rulebase' && !rulebase) rulebase = 'local';
+
+    const parentTag = el.parentElement?.tagName;
+    if (tag === 'entry' && parentTag === 'device-group') {
+      return { scope: 'device-group', name: el.getAttribute('name') || undefined, rulebase };
+    }
+    if (tag === 'entry' && parentTag === 'vsys') {
+      return { scope: 'vsys', name: el.getAttribute('name') || undefined, rulebase };
+    }
+    if (tag === 'shared') return { scope: 'shared', rulebase };
+    el = el.parentElement;
+  }
+  return { scope: 'local', rulebase };
+}
+
+function textOf(doc: Document, selector: string): string[] {
+  return Array.from(doc.querySelectorAll(selector))
+    .map((n) => n.textContent?.trim() || '')
+    .filter(Boolean);
+}
+
+/**
+ * Determines how the device in this TSF is managed:
+ *  - panorama:          the TSF is from a Panorama (device-groups / templates present)
+ *  - scm-managed:       a firewall managed by Strata Cloud Manager (heuristic markers)
+ *  - panorama-managed:  a firewall pointing at one or more Panorama servers
+ *  - standalone:        none of the above found
+ * The UI lets the user override this, because a TSF does not always carry
+ * enough information to be certain.
+ */
+export function detectManagement(doc: Document, xmlString: string, model: string): ManagementDetection {
+  const dgNames = Array.from(doc.querySelectorAll('devices > entry > device-group > entry'))
+    .map((e) => e.getAttribute('name') || '').filter(Boolean);
+  const templateCount = doc.querySelectorAll('devices > entry > template > entry, devices > entry > template-stack > entry').length;
+  const panoramaModel = /panorama|\bM-\d{2,4}\b/i.test(model);
+
+  if (panoramaModel || dgNames.length > 0 || templateCount > 0) {
+    const evidence: string[] = [];
+    if (panoramaModel) evidence.push(`Model "${model}" is a Panorama appliance`);
+    if (dgNames.length) evidence.push(`${dgNames.length} device group(s) defined: ${dgNames.slice(0, 4).join(', ')}${dgNames.length > 4 ? '…' : ''}`);
+    if (templateCount) evidence.push(`${templateCount} template / template stack(s) defined`);
+    return { mode: 'panorama', confidence: 'high', evidence };
+  }
+
+  const scmMarkers: { re: RegExp; label: string }[] = [
+    { re: /<cloud-management[\s>/]/i, label: '<cloud-management> configuration present' },
+    { re: /<cloud-mgmt[\s>/]/i, label: '<cloud-mgmt> configuration present' },
+    { re: /strata[\s_-]*cloud[\s_-]*manager/i, label: 'Reference to Strata Cloud Manager in config' },
+    { re: /\bscm[-_]managed\b/i, label: 'SCM-managed marker in config' },
+  ];
+  const scmHits = scmMarkers.filter((m) => m.re.test(xmlString)).map((m) => m.label);
+  if (scmHits.length > 0) {
+    return { mode: 'scm-managed', confidence: scmHits.length > 1 ? 'medium' : 'low', evidence: scmHits };
+  }
+
+  const panoramaServers = Array.from(new Set([
+    ...textOf(doc, 'deviceconfig > system > panorama-server'),
+    ...textOf(doc, 'deviceconfig > system > panorama-server-2'),
+    ...textOf(doc, 'deviceconfig > system > panorama > local-panorama > panorama-server'),
+    ...textOf(doc, 'deviceconfig > system > panorama > local-panorama > panorama-server-2'),
+  ]));
+  if (panoramaServers.length > 0) {
+    return {
+      mode: 'panorama-managed',
+      confidence: 'high',
+      evidence: [`Panorama server(s) configured: ${panoramaServers.join(', ')}`],
+      panoramaServers,
+    };
+  }
+
+  return {
+    mode: 'standalone',
+    confidence: 'medium',
+    evidence: ['No Panorama server, device groups, or cloud-management settings found in the configuration'],
+  };
+}
+
+/**
  * Parses PAN-OS XML Document into a typed PanOsConfig object.
  */
 export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsConfig {
@@ -201,20 +290,15 @@ export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsC
 
   // Detect model
   const modelMatch = xmlString.match(/<model>([^<]+)<\/model>/) || xmlString.match(/PA-[0-9]{3,4}[A-Za-z-]*/);
-  const model = modelMatch ? (modelMatch[1] || modelMatch[0]) : (xmlString.includes('panorama') ? 'Panorama M-Series' : 'PA-3260');
+  const model = modelMatch ? (modelMatch[1] || modelMatch[0]) : (doc.querySelector('devices > entry > device-group > entry, devices > entry > template > entry') ? 'Panorama M-Series' : 'PA-3260');
 
   // Detect serial
   const serialMatch = xmlString.match(/<serial>([^<]+)<\/serial>/) || xmlString.match(/01[0-9]{10}/);
   const serial = serialMatch ? (serialMatch[1] || serialMatch[0]) : '015301048291';
 
-  // Check if Panorama
-  const isPanorama = Boolean(
-    doc.querySelector('panorama') ||
-    doc.querySelector('device-group') ||
-    doc.querySelector('template') ||
-    xmlString.includes('<device-group>') ||
-    model.toLowerCase().includes('panorama')
-  );
+  // Management mode (standalone / Panorama-managed / Panorama / SCM)
+  const management = detectManagement(doc, xmlString, model);
+  const isPanorama = management.mode === 'panorama';
 
   // Vsys list
   const vsysEntries = Array.from(doc.querySelectorAll('devices > entry > vsys > entry'));
@@ -302,6 +386,7 @@ export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsC
   const ruleEntries = Array.from(doc.querySelectorAll('rulebase > security > rules > entry, security > rules > entry'));
   const securityRules: SecurityRule[] = ruleEntries.map((ruleNode, idx) => {
     const name = ruleNode.getAttribute('name') || `rule-${idx + 1}`;
+    const ruleLoc = locateNode(ruleNode);
     const fromZones = getMemberValues(ruleNode.querySelector('from'));
     const toZones = getMemberValues(ruleNode.querySelector('to'));
     const sources = getMemberValues(ruleNode.querySelector('source'));
@@ -358,6 +443,10 @@ export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsC
       disabled,
       description,
       profileSetting,
+      rulebase: ruleLoc.rulebase,
+      location: { scope: ruleLoc.scope, name: ruleLoc.name },
+      deviceGroup: ruleLoc.scope === 'device-group' ? ruleLoc.name : undefined,
+      vsys: ruleLoc.scope === 'vsys' ? ruleLoc.name : undefined,
     };
   });
 
@@ -382,11 +471,13 @@ export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsC
       value = node.querySelector('ip-wildcard')?.textContent?.trim() || '';
     }
 
+    const { scope, name: scopeName } = locateNode(node);
     return {
       name,
       type,
       value: value || name,
       description: node.querySelector('description')?.textContent?.trim(),
+      location: { scope, name: scopeName },
     };
   }).filter((obj) => Boolean(obj.name));
 
@@ -401,6 +492,7 @@ export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsC
       type: (isDynamic ? 'dynamic' : 'static') as 'dynamic' | 'static',
       members: staticMembers,
       description: node.querySelector('description')?.textContent?.trim(),
+      location: (({ scope, name: n }) => ({ scope, name: n }))(locateNode(node)),
     };
   }).filter((grp) => Boolean(grp.name));
 
@@ -416,6 +508,7 @@ export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsC
       protocol: (udpPort ? 'udp' : 'tcp') as 'tcp' | 'udp',
       port: tcpPort || udpPort || 'any',
       description: node.querySelector('description')?.textContent?.trim(),
+      location: (({ scope, name: n }) => ({ scope, name: n }))(locateNode(node)),
     };
   }).filter((srv) => Boolean(srv.name));
 
@@ -496,6 +589,7 @@ export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsC
       isPanorama,
       vsysList,
       deviceGroups: deviceGroups.length ? deviceGroups : undefined,
+      management,
     },
     securityRules,
     natRules: [],
@@ -505,5 +599,11 @@ export function parsePanOsXml(xmlString: string, sourceFileName: string): PanOsC
     decryptionRules,
     hardening,
     rawXmlPreview: xmlString.slice(0, 10000),
+    referencedNames: Array.from(new Set(
+      Array.from(doc.querySelectorAll('member, translated-address'))
+        .filter((n) => n.children.length === 0)
+        .map((n) => n.textContent?.trim() || '')
+        .filter(Boolean)
+    )),
   };
 }

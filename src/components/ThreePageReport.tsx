@@ -1,24 +1,31 @@
 import React from 'react';
 import { AuditReportData } from '../types/panos';
-import { Shield, AlertCircle, CheckCircle2, AlertTriangle, Printer, Download, Copy, Check } from 'lucide-react';
+import { CleanupPlaybook } from '../services/cleanupPlaybook';
+import { copyText } from '../utils/clipboard';
+import { Disclaimer, DISCLAIMER_SHORT } from './Disclaimer';
+import { ReportCoverPage, ReportClosingPage } from './ReportBookends';
+import { Shield, AlertCircle, CheckCircle2, AlertTriangle, Printer, Download, Copy, Check, X } from 'lucide-react';
 
 interface ThreePageReportProps {
   reportData: AuditReportData;
   onPrint: () => void;
+  playbook: CleanupPlaybook;
 }
 
-export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, onPrint }) => {
+export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, onPrint, playbook }) => {
   const { config, overallScore, riskTier, nistEvaluations, nistCompliancePercentage, zeroTrustPillars, zeroTrustOverallScore, cleanupSummary, advisories, releaseGuidance, topExecutiveRisks } = reportData;
-  const [copiedCli, setCopiedCli] = React.useState(false);
+  const [copiedCli, setCopiedCli] = React.useState<'idle' | 'copied' | 'failed'>('idle');
 
   const criticalVulns = advisories.filter((a) => a.isVulnerable && a.severity === 'CRITICAL');
   const activeVulns = advisories.filter((a) => a.isVulnerable);
 
-  const handleCopyCli = () => {
-    navigator.clipboard.writeText(cleanupSummary.cleanupCliCommands.join('\n'));
-    setCopiedCli(true);
-    setTimeout(() => setCopiedCli(false), 2000);
+  const handleCopyCli = async () => {
+    const ok = await copyText(playbook.script.join('\n'));
+    setCopiedCli(ok ? 'copied' : 'failed');
+    setTimeout(() => setCopiedCli('idle'), 2200);
   };
+  const isCliScript = playbook.scriptLanguage !== 'Bash (SCM Config API)';
+  const copyLabel = isCliScript ? 'Copy Cleanup Script' : 'Copy SCM API Script';
 
   const handleDownloadJson = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(reportData, null, 2));
@@ -53,8 +60,8 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
             onClick={handleCopyCli}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
           >
-            {copiedCli ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-            <span>{copiedCli ? 'Copied CLI Script' : 'Copy CLI Script'}</span>
+            {copiedCli === 'copied' ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : copiedCli === 'failed' ? <X className="h-3.5 w-3.5 text-rose-400" /> : <Copy className="h-3.5 w-3.5" />}
+            <span>{copiedCli === 'copied' ? 'Copied to Clipboard' : copiedCli === 'failed' ? 'Copy blocked — see Object Hygiene tab' : copyLabel}</span>
           </button>
 
           <button
@@ -75,6 +82,12 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         </div>
       </div>
 
+      {/* On-screen disclaimer (the printed report carries it on the cover and closing pages) */}
+      <Disclaimer variant="report" className="no-print mb-6" />
+
+      {/* Print-only title page */}
+      <ReportCoverPage reportData={reportData} managementLabel={playbook.modeLabel} />
+
       {/* ========================================================================= */}
       {/* PAGE 1: EXECUTIVE SUMMARY, SECURITY POSTURE & ADVISORIES                 */}
       {/* ========================================================================= */}
@@ -83,7 +96,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-4 mb-4 flex justify-between items-start">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 1 of 3
+              PAN-OS NGFW & Panorama Audit Report · Page 1 of 3 · {DISCLAIMER_SHORT}
             </div>
             <h1 className="text-xl font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               Executive Security & Compliance Assessment
@@ -261,7 +274,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 2 of 3
+              PAN-OS NGFW & Panorama Audit Report · Page 2 of 3 · {DISCLAIMER_SHORT}
             </div>
             <h2 className="text-lg font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               NIST SP 800-53 Rev 5 & Zero Trust (NIST 800-207) Analysis
@@ -381,7 +394,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 3 of 3
+              PAN-OS NGFW & Panorama Audit Report · Page 3 of 3 · {DISCLAIMER_SHORT}
             </div>
             <h2 className="text-lg font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               Hygiene Cleanup, Device Hardening & Community Advisory
@@ -434,19 +447,29 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
             </div>
           </div>
 
-          {/* Sample CLI Cleanup Script */}
+          {/* Management-aware cleanup excerpt */}
           <div className="p-2 rounded bg-slate-950 border border-slate-800 print:bg-slate-100 print:border-slate-300 font-mono text-[9.5px] text-slate-300 print:text-slate-800 overflow-hidden">
-            <div className="text-slate-400 print:text-slate-600 font-semibold mb-0.5">
-              # Automated PAN-OS CLI Cleanup Snippet (Extract):
+            <div className="text-slate-400 print:text-slate-600 font-semibold mb-0.5 font-sans">
+              Remediation path — {playbook.modeLabel}: {playbook.headline}.
             </div>
-            {cleanupSummary.cleanupCliCommands.slice(0, 6).map((cmd, idx) => (
-              <div key={idx} className="truncate">{cmd}</div>
-            ))}
-            {cleanupSummary.cleanupCliCommands.length > 6 && (
-              <div className="text-slate-400 print:text-slate-600 italic">
-                ... (+{cleanupSummary.cleanupCliCommands.length - 6} more commands available in Object Hygiene tab)
-              </div>
-            )}
+            {(() => {
+              const lines = playbook.script.filter((l) => l.trim() && !l.startsWith('#') && !l.startsWith(':') && !l.startsWith('set -'));
+              const shown = isCliScript
+                ? lines.slice(0, 6)
+                : playbook.steps.map((st, i) => `${i + 1}. ${st.title}`);
+              return (
+                <>
+                  {shown.map((cmd, idx) => (
+                    <div key={idx} className="truncate">{cmd}</div>
+                  ))}
+                  {isCliScript && lines.length > 6 && (
+                    <div className="text-slate-400 print:text-slate-600 italic">
+                      ... (+{lines.length - 6} more lines — full {playbook.scriptLanguage} script and steps in the Object Hygiene tab)
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
 
@@ -529,6 +552,9 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
           </div>
         </div>
       </div>
+
+      {/* Print-only closing page */}
+      <ReportClosingPage reportData={reportData} managementLabel={playbook.modeLabel} />
     </div>
   );
 };

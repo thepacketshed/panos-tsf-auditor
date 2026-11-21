@@ -1,8 +1,9 @@
-import React, { useState, useTransition } from 'react';
-import { PanOsConfig, AuditReportData } from './types/panos';
+import React, { useState, useMemo } from 'react';
+import { PanOsConfig, AuditReportData, ManagementMode } from './types/panos';
 import { SAMPLE_CONFIG_PA3260, SAMPLE_CONFIG_PANORAMA, SAMPLE_CONFIG_PA5450 } from './data/sampleConfigs';
 import { extractConfigXmlFromFile, parsePanOsXml } from './services/tsfExtractor';
 import { generateAuditReport } from './services/advisoryMatcher';
+import { buildCleanupPlaybook, defaultManagementMode, PlaybookOptions } from './services/cleanupPlaybook';
 import { Header } from './components/Header';
 import { FileUploadZone } from './components/FileUploadZone';
 import { ThreePageReport } from './components/ThreePageReport';
@@ -21,6 +22,21 @@ export default function App() {
   const [statusMessage, setStatusMessage] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
+  // Management mode chosen by the user (null = use auto-detected) + per-mode inputs
+  const [modeOverride, setModeOverride] = useState<ManagementMode | null>(null);
+  const [playbookOptions, setPlaybookOptions] = useState<PlaybookOptions>({});
+
+  const detectedMode = defaultManagementMode(config);
+  const managementMode = modeOverride ?? detectedMode;
+  const playbook = useMemo(
+    () => buildCleanupPlaybook(config, reportData.cleanupSummary, managementMode, playbookOptions),
+    [config, reportData, managementMode, playbookOptions]
+  );
+
+  const resetManagement = () => {
+    setModeOverride(null);
+    setPlaybookOptions({});
+  };
 
   const handleLoadSample = (sampleKey: 'pa3260' | 'panorama' | 'pa5450') => {
     let selectedConfig = SAMPLE_CONFIG_PA3260;
@@ -30,6 +46,7 @@ export default function App() {
     const report = generateAuditReport(selectedConfig);
     setConfig(selectedConfig);
     setReportData(report);
+    resetManagement();
     setErrorMessage('');
     setShowUploadModal(false);
   };
@@ -51,6 +68,7 @@ export default function App() {
 
       setConfig(parsedConfig);
       setReportData(report);
+      resetManagement();
       setIsProcessing(false);
       setShowUploadModal(false);
     } catch (err: unknown) {
@@ -114,7 +132,7 @@ export default function App() {
 
         {/* Tab Views */}
         {activeTab === 'report' && (
-          <ThreePageReport reportData={reportData} onPrint={handlePrint} />
+          <ThreePageReport reportData={reportData} onPrint={handlePrint} playbook={playbook} />
         )}
 
         {activeTab === 'nist' && (
@@ -135,6 +153,13 @@ export default function App() {
           <CleanupTab
             cleanupSummary={reportData.cleanupSummary}
             hostname={config.metadata.hostname}
+            config={config}
+            playbook={playbook}
+            mode={managementMode}
+            detectedMode={detectedMode}
+            onModeChange={(m) => setModeOverride(m === detectedMode ? null : m)}
+            options={playbookOptions}
+            onOptionsChange={setPlaybookOptions}
           />
         )}
 

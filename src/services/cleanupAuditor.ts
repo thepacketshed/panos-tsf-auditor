@@ -42,6 +42,14 @@ export function evaluateCleanupAndHygiene(config: PanOsConfig): UnusedCleanupSum
     scanArray(dec.destinations);
   });
 
+  // Any name referenced elsewhere in the full config (NAT, PBF, QoS, decryption,
+  // GlobalProtect, etc.) counts as used, so nothing is wrongly flagged for deletion.
+  (config.referencedNames || []).forEach((n) => {
+    referencedAddresses.add(n);
+    referencedGroups.add(n);
+    referencedServices.add(n);
+  });
+
   // Scan Address Groups: if a group is used, its members are also marked used
   addressGroups.forEach((grp) => {
     grp.members.forEach((m) => {
