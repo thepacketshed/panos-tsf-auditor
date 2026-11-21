@@ -32,6 +32,28 @@ export interface SecurityRule {
   tag?: string[];
   vsys?: string;
   deviceGroup?: string;
+  /** Where the rule lives: local rulebase (firewall) or Panorama/SCM pre/post rulebase */
+  rulebase?: 'local' | 'pre' | 'post';
+  location?: ObjectLocation;
+}
+
+/** Where an object is defined in the configuration tree */
+export interface ObjectLocation {
+  scope: 'shared' | 'device-group' | 'vsys' | 'local';
+  name?: string; // device-group or vsys name
+}
+
+/**
+ * How the device in the TSF is managed. Drives which remediation path the
+ * cleanup recommendations use (local CLI, Panorama device-group, or SCM).
+ */
+export type ManagementMode = 'standalone' | 'panorama-managed' | 'panorama' | 'scm-managed';
+
+export interface ManagementDetection {
+  mode: ManagementMode;
+  confidence: 'high' | 'medium' | 'low';
+  evidence: string[];
+  panoramaServers?: string[];
 }
 
 export interface NatRule {
@@ -46,6 +68,7 @@ export interface NatRule {
 }
 
 export interface AddressObject {
+  location?: ObjectLocation;
   name: string;
   type: 'ip-netmask' | 'ip-range' | 'fqdn' | 'wildcard';
   value: string;
@@ -56,6 +79,7 @@ export interface AddressObject {
 }
 
 export interface AddressGroupObject {
+  location?: ObjectLocation;
   name: string;
   type: 'static' | 'dynamic';
   members: string[];
@@ -65,6 +89,7 @@ export interface AddressGroupObject {
 }
 
 export interface ServiceObject {
+  location?: ObjectLocation;
   name: string;
   protocol: 'tcp' | 'udp';
   port: string;
@@ -150,6 +175,7 @@ export interface PanOsConfig {
     isPanorama: boolean;
     vsysList: string[];
     deviceGroups?: string[];
+    management?: ManagementDetection;
     appVersion?: string;
     threatVersion?: string;
   };
@@ -161,6 +187,12 @@ export interface PanOsConfig {
   decryptionRules: DecryptionRule[];
   hardening: DeviceHardeningSettings;
   rawXmlPreview?: string;
+  /**
+   * Every object name referenced anywhere in the config (rule members, NAT,
+   * PBF, decryption, QoS, group members…). Used so cleanup never flags an
+   * object as unused just because the referencing feature isn't parsed.
+   */
+  referencedNames?: string[];
 }
 
 export interface NistControlEvaluation {
