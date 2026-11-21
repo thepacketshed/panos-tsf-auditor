@@ -2,6 +2,8 @@ import React from 'react';
 import { AuditReportData } from '../types/panos';
 import { CleanupPlaybook } from '../services/cleanupPlaybook';
 import { copyText } from '../utils/clipboard';
+import { Disclaimer, DISCLAIMER_SHORT } from './Disclaimer';
+import { ReportCoverPage, ReportClosingPage } from './ReportBookends';
 import { Shield, AlertCircle, CheckCircle2, AlertTriangle, Printer, Download, Copy, Check, X } from 'lucide-react';
 
 interface ThreePageReportProps {
@@ -80,6 +82,12 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         </div>
       </div>
 
+      {/* On-screen disclaimer (the printed report carries it on the cover and closing pages) */}
+      <Disclaimer variant="report" className="no-print mb-6" />
+
+      {/* Print-only title page */}
+      <ReportCoverPage reportData={reportData} managementLabel={playbook.modeLabel} />
+
       {/* ========================================================================= */}
       {/* PAGE 1: EXECUTIVE SUMMARY, SECURITY POSTURE & ADVISORIES                 */}
       {/* ========================================================================= */}
@@ -88,7 +96,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-4 mb-4 flex justify-between items-start">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 1 of 3
+              PAN-OS NGFW & Panorama Audit Report · Page 1 of 3 · {DISCLAIMER_SHORT}
             </div>
             <h1 className="text-xl font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               Executive Security & Compliance Assessment
@@ -266,7 +274,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 2 of 3
+              PAN-OS NGFW & Panorama Audit Report · Page 2 of 3 · {DISCLAIMER_SHORT}
             </div>
             <h2 className="text-lg font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               NIST SP 800-53 Rev 5 & Zero Trust (NIST 800-207) Analysis
@@ -386,7 +394,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 3 of 3
+              PAN-OS NGFW & Panorama Audit Report · Page 3 of 3 · {DISCLAIMER_SHORT}
             </div>
             <h2 className="text-lg font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               Hygiene Cleanup, Device Hardening & Community Advisory
@@ -544,6 +552,9 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
           </div>
         </div>
       </div>
+
+      {/* Print-only closing page */}
+      <ReportClosingPage reportData={reportData} managementLabel={playbook.modeLabel} />
     </div>
   );
 };
