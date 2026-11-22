@@ -528,6 +528,11 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
             </div>
           </div>
         </div>
+
+        {/* Disclaimer */}
+        <p className="mt-3 pt-2 border-t border-slate-800 print:border-slate-300 text-[9px] leading-snug text-slate-400 print:text-slate-600">
+          <strong>Disclaimer:</strong> This report does not constitute official advice and is provided for demonstration purposes only. It is generated automatically from a single configuration snapshot and may be incomplete or inaccurate. Validate everything against official Palo Alto Networks documentation and your own change-control process before acting on it. It is not an official Palo Alto Networks tool. Built for the community, by an engineer. The Packet Shed is a personal project aimed at helping others untangle complex tech. The thoughts and opinions shared here are entirely my own and completely independent of my employer.
+        </p>
       </div>
     </div>
   );
