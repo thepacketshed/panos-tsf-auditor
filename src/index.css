@@ -62,6 +62,28 @@
     break-after: auto !important;
   }
 
+  /* Title and closing pages (logo, document details, About The Packet Shed) */
+  .report-title-page,
+  .report-closing-page {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 250mm;
+    box-sizing: border-box;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .report-title-page {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .report-closing-page {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
   /* Force light theme colors on print */
   .print-surface {
     background-color: #ffffff !important;
