@@ -1,6 +1,7 @@
 import React from 'react';
 import { AuditReportData } from '../types/panos';
 import { Shield, AlertCircle, CheckCircle2, AlertTriangle, Printer, Download, Copy, Check } from 'lucide-react';
+import { ReportTitlePage, ReportClosingPage, REPORT_DISCLAIMER } from './ReportBookends';
 
 interface ThreePageReportProps {
   reportData: AuditReportData;
@@ -70,10 +71,13 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-sm transition-colors"
           >
             <Printer className="h-3.5 w-3.5" />
-            <span>Print / Save 3-Page PDF</span>
+            <span>Print / Save PDF</span>
           </button>
         </div>
       </div>
+
+      {/* Title page (printed as page 1) */}
+      <ReportTitlePage config={config} />
 
       {/* ========================================================================= */}
       {/* PAGE 1: EXECUTIVE SUMMARY, SECURITY POSTURE & ADVISORIES                 */}
@@ -83,7 +87,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-4 mb-4 flex justify-between items-start">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 1 of 3
+              Palo Alto Networks NGFW & Panorama Audit Report · Page 2 of 5
             </div>
             <h1 className="text-xl font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               Executive Security & Compliance Assessment
@@ -261,7 +265,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 2 of 3
+              Palo Alto Networks NGFW & Panorama Audit Report · Page 3 of 5
             </div>
             <h2 className="text-lg font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               NIST SP 800-53 Rev 5 & Zero Trust (NIST 800-207) Analysis
@@ -381,7 +385,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
           <div>
             <div className="text-[10px] uppercase font-bold tracking-wider text-cyan-400 print:text-cyan-700">
-              Palo Alto Networks NGFW & Panorama Audit Report · Page 3 of 3
+              Palo Alto Networks NGFW & Panorama Audit Report · Page 4 of 5
             </div>
             <h2 className="text-lg font-bold tracking-tight text-white mt-0.5 print:text-slate-900">
               Hygiene Cleanup, Device Hardening & Community Advisory
@@ -531,9 +535,12 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
 
         {/* Disclaimer */}
         <p className="mt-3 pt-2 border-t border-slate-800 print:border-slate-300 text-[9px] leading-snug text-slate-400 print:text-slate-600">
-          <strong>Disclaimer:</strong> This report does not constitute official advice and is provided for demonstration purposes only. It is generated automatically from a single configuration snapshot and may be incomplete or inaccurate. Validate everything against official Palo Alto Networks documentation and your own change-control process before acting on it. It is not an official Palo Alto Networks tool. Built for the community, by an engineer. The Packet Shed is a personal project aimed at helping others untangle complex tech. The thoughts and opinions shared here are entirely my own and completely independent of my employer.
+          <strong>Disclaimer:</strong> {REPORT_DISCLAIMER}
         </p>
       </div>
+
+      {/* Closing page (printed as page 5) */}
+      <ReportClosingPage />
     </div>
   );
 };
