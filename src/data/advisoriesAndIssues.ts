@@ -39,8 +39,8 @@ export const KNOWN_ADVISORIES: KnownAdvisoryDefinition[] = [
         { track: '11.1', vulnerableIfBelow: '11.1.2-h3', fixedIn: '11.1.2-h3 (or 11.1.4-h1)' },
       ],
     },
-    workaround: 'Disable device telemetry in Device > Setup > Telemetry if unable to patch immediately; ensure Threat ID 95187 is applied via Threat Prevention.',
-    patchRecommendation: 'Upgrade immediately to TAC recommended release PAN-OS 10.2.11-h2 or 11.1.4-h1.',
+    workaround: 'Review the current vulnerability protection guidance for your GlobalProtect interfaces at https://security.paloaltonetworks.com/CVE-2024-3400. Disabling telemetry does not mitigate this issue.',
+    patchRecommendation: 'Select a fixed build for your maintenance branch from the vendor advisory and verify suitability for your device.',
   },
   {
     cveId: 'CVE-2024-0012',
