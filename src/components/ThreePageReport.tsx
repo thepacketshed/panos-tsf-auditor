@@ -40,10 +40,10 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
           </div>
           <div>
             <h2 className="text-sm font-bold text-white">
-              Official Executive & Technical Compliance Report
+              Executive and Technical Configuration Review
             </h2>
             <p className="text-xs text-slate-400">
-              Formatted strictly to a 3-page document standard for executive presentation, board audit, and regulatory filing.
+              Three-page snapshot for technical review. Validate findings against operational evidence before sign-off.
             </p>
           </div>
         </div>
@@ -201,7 +201,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-300 print:text-slate-900">
-              PAN-OS Security Advisories & Recommended Golden Release
+              Potential advisory matches and release guidance
             </span>
             <span className="text-xs font-mono font-semibold text-cyan-400 print:text-cyan-800">
               Recommended Target: {releaseGuidance.recommendedGoldenRelease}
@@ -423,7 +423,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
             <div className="p-2.5 rounded bg-slate-950/60 border border-slate-800 print:bg-slate-50 print:border-slate-200 text-xs">
               <div className="font-semibold text-slate-200 print:text-slate-900 mb-1 flex items-center justify-between">
                 <span>Unreferenced Address Objects ({cleanupSummary.unusedAddressObjects.length})</span>
-                <span className="text-[10px] text-slate-400 print:text-slate-600">Safe to Delete</span>
+                <span className="text-[10px] text-slate-400 print:text-slate-600">Review references before removal</span>
               </div>
               <div className="text-[10px] font-mono text-slate-400 print:text-slate-600 truncate">
                 {cleanupSummary.unusedAddressObjects.slice(0, 5).map((o) => o.name).join(', ') || 'Clean. No orphaned address objects.'}
@@ -515,7 +515,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
         <div className="mt-4 pt-3 border-t border-slate-800 print:border-slate-300 flex items-center justify-between text-xs text-slate-400 print:text-slate-600">
           <div>
             <div>Audited by: <strong>PAN-OS TSF Compliance Engine</strong></div>
-            <div className="text-[10px] mt-0.5 font-mono">Report Hash: SHA256:{config.metadata.serial.slice(0, 8)}...Verified</div>
+            <div className="text-[10px] mt-0.5 font-mono">Configuration snapshot · verify against source file</div>
           </div>
           <div className="flex gap-8 text-right">
             <div>
