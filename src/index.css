@@ -82,3 +82,30 @@
   }
 }
 
+
+/* Mobile & tablet layout (screen only; print layout unaffected) */
+@media screen and (max-width: 1023px) {
+  header > div { flex-wrap: wrap; gap: 0.75rem !important; padding-left: 1rem !important; padding-right: 1rem !important; }
+  header > div > div:first-child { min-width: 0; flex-shrink: 1 !important; }
+  header nav { display: flex !important; order: 10; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  header nav::-webkit-scrollbar { display: none; }
+  header nav > * { flex-shrink: 0; }
+}
+@media screen and (max-width: 640px) {
+  html, body { overflow-x: hidden; }
+  header .whitespace-nowrap { white-space: normal; flex-wrap: wrap; column-gap: 0.5rem; }
+  header .whitespace-nowrap > span { white-space: nowrap; }
+  [class*="report-page"] { padding: 1rem !important; }
+  [class*="report-page"] > div:first-child { flex-wrap: wrap; gap: 0.75rem; }
+  [class*="report-page"] .text-right { text-align: left; }
+  [class*="report-page"] .grid-cols-4,
+  [class*="report-page"] .grid-cols-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [class*="report-page"] .grid-cols-3,
+  [class*="report-page"] .grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
+  [class*="report-page"] .text-2xl { font-size: 1.25rem; line-height: 1.75rem; overflow-wrap: anywhere; }
+  [class*="report-page"] .font-mono { overflow-wrap: anywhere; }
+  [class*="report-page"] table { display: block; overflow-x: auto; white-space: nowrap; }
+  [class*="report-page"] .flex.gap-8 { flex-wrap: wrap; gap: 1rem; }
+  [class*="report-page"] .flex.justify-between { flex-wrap: wrap; gap: 0.75rem; }
+  .flex:has(> button.whitespace-nowrap):not(header *) { flex-wrap: wrap; }
+}
