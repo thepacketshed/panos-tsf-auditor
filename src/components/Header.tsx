@@ -52,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <FileText className="h-3.5 w-3.5" />
-            <span>3-Page Executive Report</span>
+            <span>Executive Report</span>
           </button>
 
           <button
@@ -116,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        {/* Zone 3: Actions (Print 3-Page PDF & Samples) */}
+        {/* Zone 3: Actions (Print / Save PDF & Samples) */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="relative group">
             <button
@@ -153,10 +153,10 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onPrint}
             className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-500 rounded-lg transition-colors shadow-sm whitespace-nowrap"
-            title="Export or print strictly formatted 3-page executive compliance document"
+            title="Print or save the report as a PDF"
           >
             <Printer className="h-3.5 w-3.5" />
-            <span>Print 3-Page Report</span>
+            <span>Print / Save PDF</span>
           </button>
 
           <button
