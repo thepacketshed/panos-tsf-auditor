@@ -44,7 +44,7 @@ export const ThreePageReport: React.FC<ThreePageReportProps> = ({ reportData, on
               Executive and Technical Configuration Review
             </h2>
             <p className="text-xs text-slate-400">
-              Three-page snapshot for technical review. Validate findings against operational evidence before sign-off.
+              Configuration snapshot for technical review. Validate findings against operational evidence before sign-off.
             </p>
           </div>
         </div>
